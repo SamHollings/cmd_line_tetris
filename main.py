@@ -9,5 +9,5 @@ Author: Sam Hollings"""
 
 tetromino = []
 
-tetromino[0].append()
+tetromino[0].append("..L.")
 
