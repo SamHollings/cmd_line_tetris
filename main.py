@@ -9,5 +9,18 @@ Author: Sam Hollings"""
 
 tetromino = []
 
-tetromino[0].append("..L.")
+tetromino[0].append("..X.")
+tetromino[0].append("..X.")
+tetromino[0].append("..X.")
+tetromino[0].append("..X.")
+
+tetromino[1].append(".X..")
+tetromino[1].append(".XX.")
+tetromino[1].append("..X.")
+tetromino[1].append("....")
+
+tetromino[2].append("...."\
+".XX."\
+".XX."\
+"....")
 
