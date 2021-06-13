@@ -3,10 +3,18 @@ This is based on the video by "one lonely coder" - https://www.youtube.com/watch
 and rewritten in Python.
 Author: Sam Hollings"""
 
-import textwrap
-from curses import wrapper
+import curses
+
+# initialise the terminal
+stdscr = curses.initscr()
+curses.cbreak()
+curses.noecho()
+stdscr.nodelay(True)
+curses.curs_set(0)
+stdscr.keypad(1)
 
 # Assets
+
 
 def indexer_rotator(x,y, w=4, rotation=0):
     if rotation == 0:
@@ -21,10 +29,22 @@ def indexer_rotator(x,y, w=4, rotation=0):
         i = 3 + y + (x * 4)
     return i
 
-# field definition
 
-SCREEN_WIDTH = 80 # nScreenWidth
-SCREEN_HEIGHT = 30 # nScreenHeight
+def wrap(string, max_width):
+    s=''
+    for i in range(0,len(string),max_width):
+        s=s+string[i:i+max_width]
+        s=s+'\n'
+    return s
+
+def does_piece_fit(tetromino, rotation, pos_x, pos_y):
+
+
+    return True
+
+# field definition
+SCREEN_WIDTH = 70 #80 # nScreenWidth
+SCREEN_HEIGHT = 25#30 # nScreenHeight
 FIELD_WIDTH = 12 # nFieldWidth
 FIELD_HEIGHT = 18 # nFieldHeight
 FIELD = '' #pField
@@ -33,15 +53,18 @@ FIELD = '' #pField
 ACTIVE_FIELD = [0]*(FIELD_WIDTH*FIELD_HEIGHT) # Create play field buffer
 for x in range(0,  FIELD_WIDTH): # Board Boundary
     for y in range (0, FIELD_HEIGHT):
-        if x == 0 or x == FIELD_WIDTH - 1 or y == FIELD_HEIGHT - 1:
+        if x == 0:
+            cell_value = 9
+        elif x == FIELD_WIDTH - 1:
+            cell_value = 9
+        elif y == FIELD_HEIGHT - 1:
             cell_value = 9
         else:
             cell_value = 0
-        ACTIVE_FIELD[indexer_rotator(x, y, w=FIELD_WIDTH)] = cell_value
+        ACTIVE_FIELD[indexer_rotator(y, x, w=FIELD_WIDTH)] = cell_value
 
 
 # create tetromino object
-
 tetromino = []
 
 # 0 - line
@@ -89,45 +112,50 @@ tetromino.append("...." \
 
 # Display
 
-# Draw the field
-
-## testing
-FIELD_WIDTH = 4
-FIELD_HEIGHT = 4
-
-SCREEN_WIDTH = 10
-SCREEN_HEIGHT = 10
-# end test
-
+# define the field
 screen = ['.']*(SCREEN_WIDTH*SCREEN_HEIGHT)
 offset = 2
 
+character_set = " ABCDEFG=#"
+character_set = [' ','A','B','C ','D','E','F','G','=','#']
+
 for x in range(0, FIELD_WIDTH):
     for y in range(0, FIELD_HEIGHT):
-        screen[((y + offset) * SCREEN_WIDTH) + (x + offset)] = " ABCDEFG=#"[[9,9,9,9,9,0,0,9,9,0,0,9,9,9,9,9][y * FIELD_WIDTH + x]];
-        #screen[(y + offset) * SCREEN_WIDTH + (x + offset)] = " ABCDEFG=#"[ACTIVE_FIELD[y * FIELD_WIDTH + x]];
+        screen[(y + offset) * SCREEN_WIDTH + (x + offset)] = character_set[ACTIVE_FIELD[y * FIELD_WIDTH + x]];
 
-def wrap(string, max_width):
-    s=''
-    for i in range(0,len(string),max_width):
-        s=s+string[i:i+max_width]
-        s=s+'\n'
-    return s
+# Game logic
+current_piece = 0
+current_rotation = 0
+current_x = int(FIELD_WIDTH / 2)
+current_y = 0
 
-#print(wrap("".join(screen),SCREEN_WIDTH))
-#
-# exit()
 
-# for y, row in enumerate(wrap("".join(screen),SCREEN_WIDTH)):
-#     print(row)
+# Game loop
+game_over = False
+while game_over is False:
+    # Game Timing ###############################
 
-def main(stdscr):
-    # Clear screen
-    stdscr.clear()
+    # Input #####################################
+    key = stdscr.getch()
+
+    input_left = curses.KEY_LEFT
+    input_down = curses.KEY_DOWN
+    input_right = curses.KEY_RIGHT
+
+    # Game logic ################################
+
+    # Render Output #############################
+
+    # Draw field
+    stdscr.clear() # Clear screen
 
     stdscr.addstr(0, 0, wrap("".join(screen),SCREEN_WIDTH))
 
-    stdscr.refresh()
-    stdscr.getkey()
+    stdscr.addstr(0, 20, "Hit 'q' to quit")
+    if key == ord('q'): # Q to exit
+        break
 
-wrapper(main)
+    stdscr.refresh()
+
+
+curses.endwin()
