@@ -116,6 +116,7 @@ tetromino.append(".X.." \
                  ".XX." \
                  "..X." \
                  "....")
+
 # 3 - square
 tetromino.append("...." \
                  ".XX." \
@@ -141,7 +142,6 @@ tetromino.append("...." \
                  ".X.." \
                  ".X..")
 
-
 # Display
 
 # define the field
@@ -154,7 +154,7 @@ character_set = [' ','A','B','C ','D','E','F','G','=','#']
 
 
 # Game logic
-current_piece = 0
+current_piece = 1
 current_rotation = 0
 current_x = int(FIELD_WIDTH / 2)
 current_y = 0
@@ -164,6 +164,8 @@ current_y = 0
 game_over = False
 while game_over is False:
     # Game Timing ###############################
+    import time
+    time.sleep(0.05)
 
     # Input #####################################
     key = stdscr.getch()
@@ -171,6 +173,18 @@ while game_over is False:
     input_left = curses.KEY_LEFT
     input_down = curses.KEY_DOWN
     input_right = curses.KEY_RIGHT
+
+    if key == curses.KEY_LEFT:
+        current_piece = current_piece - 1
+    if key == curses.KEY_RIGHT:
+        current_piece = current_piece + 1
+
+    if current_piece < 0:
+        current_piece = 0
+    if current_piece > 6:
+        current_piece = 6
+
+
 
     # Game logic ################################
 
@@ -188,7 +202,7 @@ while game_over is False:
     # Draw Current Piece
     for piece_x in range(0, 4):
         for piece_y in range(0, 4):
-            if (tetromino[current_piece][indexer_rotator(piece_x,piece_y, current_rotation)] == 'X'):
+            if (tetromino[current_piece][indexer_rotator(piece_x,piece_y, w=4, rotation=current_rotation)] == 'X'):
                 screen[(current_y + piece_y + offset) * SCREEN_WIDTH +
                        (current_x + piece_x + offset)] = character_set[current_piece+1];
 
@@ -198,10 +212,10 @@ while game_over is False:
 
     # Draw instructions
     stdscr.addstr(0, 20, "Hit 'q' to quit")
+    stdscr.addstr(1, 20, f"Current Piece: {current_piece}")
     if key == ord('q'): # Q to exit
         break
 
     stdscr.refresh()
-
 
 curses.endwin()
