@@ -17,8 +17,16 @@ stdscr.keypad(1)
 
 
 def indexer_rotator(x,y, w=4, rotation=0):
+    """
+
+    :param x:
+    :param y:
+    :param w:
+    :param rotation:
+    :return:
+    """
     if rotation == 0:
-        i = x*w + y
+        i = y*w + x
     elif rotation == 1: # 90 degrees
         i = 12+y-(x*4)
     elif rotation == 1:  # 90 degrees
@@ -31,15 +39,39 @@ def indexer_rotator(x,y, w=4, rotation=0):
 
 
 def wrap(string, max_width):
+    """
+
+    :param string:
+    :param max_width:
+    :return:
+    """
     s=''
     for i in range(0,len(string),max_width):
         s=s+string[i:i+max_width]
         s=s+'\n'
     return s
 
-def does_piece_fit(tetromino, rotation, pos_x, pos_y):
+def does_piece_fit(n_tetromino, rotation, pos_x, pos_y):
+    """
 
+    :param n_tetromino:
+    :param rotation:
+    :param pos_x:
+    :param pos_y:
+    :return:
+    """
+    for x in range(0,4):
+        for y in range(0,4):
+            # get index of the piece component
+            i_piece = indexer_rotator(x, y, rotation)
 
+            # get index of the corresponding place on the filed
+            i_field = indexer_rotator(pos_x + x, pos_y + y)
+
+            if ((pos_x + x) >= 0 and (pos_x + x) < FIELD_WIDTH and
+                (pos_y + y) >= 0 and (pos_y + y) < FIELD_HEIGHT and
+                tetromino[n_tetromino][i_piece] == 'X' and ACTIVE_FIELD[i_field] != 0):
+                return False
     return True
 
 # field definition
@@ -61,7 +93,7 @@ for x in range(0,  FIELD_WIDTH): # Board Boundary
             cell_value = 9
         else:
             cell_value = 0
-        ACTIVE_FIELD[indexer_rotator(y, x, w=FIELD_WIDTH)] = cell_value
+        ACTIVE_FIELD[indexer_rotator(x, y, w=FIELD_WIDTH)] = cell_value
 
 
 # create tetromino object
@@ -119,9 +151,7 @@ offset = 2
 character_set = " ABCDEFG=#"
 character_set = [' ','A','B','C ','D','E','F','G','=','#']
 
-for x in range(0, FIELD_WIDTH):
-    for y in range(0, FIELD_HEIGHT):
-        screen[(y + offset) * SCREEN_WIDTH + (x + offset)] = character_set[ACTIVE_FIELD[y * FIELD_WIDTH + x]];
+
 
 # Game logic
 current_piece = 0
@@ -149,8 +179,24 @@ while game_over is False:
     # Draw field
     stdscr.clear() # Clear screen
 
-    stdscr.addstr(0, 0, wrap("".join(screen),SCREEN_WIDTH))
+    for x in range(0, FIELD_WIDTH):
+        for y in range(0, FIELD_HEIGHT):
+            screen[(y + offset) * SCREEN_WIDTH + (x + offset)] = character_set[ACTIVE_FIELD[y * FIELD_WIDTH + x]];
 
+
+
+    # Draw Current Piece
+    for piece_x in range(0, 4):
+        for piece_y in range(0, 4):
+            if (tetromino[current_piece][indexer_rotator(piece_x,piece_y, current_rotation)] == 'X'):
+                screen[(current_y + piece_y + offset) * SCREEN_WIDTH +
+                       (current_x + piece_x + offset)] = character_set[current_piece+1];
+
+
+    # display frame
+    stdscr.addstr(0, 0, wrap("".join(screen), SCREEN_WIDTH))
+
+    # Draw instructions
     stdscr.addstr(0, 20, "Hit 'q' to quit")
     if key == ord('q'): # Q to exit
         break
