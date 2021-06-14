@@ -149,12 +149,10 @@ screen = ['.']*(SCREEN_WIDTH*SCREEN_HEIGHT)
 offset = 2
 
 character_set = " ABCDEFG=#"
-character_set = [' ','A','B','C ','D','E','F','G','=','#']
-
-
+#character_set = [' ','A','B','C','D','E','F','G','=','#']
 
 # Game logic
-current_piece = 1
+current_piece = 2
 current_rotation = 0
 current_x = int(FIELD_WIDTH / 2)
 current_y = 0
@@ -174,10 +172,18 @@ while game_over is False:
     input_down = curses.KEY_DOWN
     input_right = curses.KEY_RIGHT
 
+    if key == ord('z'):
+        current_rotation+=1
+        if current_rotation > 3:
+            current_rotation = 0
+
+    if key == curses.KEY_DOWN:
+        current_y = min(current_y + 1, FIELD_HEIGHT - 4)
+
     if key == curses.KEY_LEFT:
-        current_piece = current_piece - 1
+        current_x = max(current_x - 1,0)
     if key == curses.KEY_RIGHT:
-        current_piece = current_piece + 1
+        current_x = min(current_x + 1,FIELD_WIDTH - 4)
 
     if current_piece < 0:
         current_piece = 0
@@ -196,8 +202,6 @@ while game_over is False:
     for x in range(0, FIELD_WIDTH):
         for y in range(0, FIELD_HEIGHT):
             screen[(y + offset) * SCREEN_WIDTH + (x + offset)] = character_set[ACTIVE_FIELD[y * FIELD_WIDTH + x]];
-
-
 
     # Draw Current Piece
     for piece_x in range(0, 4):
