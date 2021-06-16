@@ -7,6 +7,11 @@ import curses
 
 # initialise the terminal
 stdscr = curses.initscr()
+
+# begin_x = 20; begin_y = 7
+# height = 100; width = 100
+# stdscr = curses.newwin(height, width, begin_y, begin_x)
+
 curses.cbreak()
 curses.noecho()
 stdscr.nodelay(True)
