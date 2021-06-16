@@ -4,19 +4,25 @@ and rewritten in Python.
 Author: Sam Hollings"""
 
 import curses
+import ctypes
+import time
+
+terminal_on = True
 
 # initialise the terminal
-stdscr = curses.initscr()
+if terminal_on is True:
+    kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+    stdscr = curses.initscr()
 
 # begin_x = 20; begin_y = 7
 # height = 100; width = 100
 # stdscr = curses.newwin(height, width, begin_y, begin_x)
 
-curses.cbreak()
-curses.noecho()
-stdscr.nodelay(True)
-curses.curs_set(0)
-stdscr.keypad(1)
+    curses.cbreak()
+    curses.noecho()
+    stdscr.nodelay(True)
+    curses.curs_set(0)
+    stdscr.keypad(1)
 
 # Assets
 
@@ -32,14 +38,13 @@ def indexer_rotator(x,y, w=4, rotation=0):
     """
     if rotation == 0:
         i = y*w + x
-    elif rotation == 1: # 90 degrees
-        i = 12+y-(x*4)
     elif rotation == 1:  # 90 degrees
-        i = 12 + y - (x * 4)
+        i = (w*(w-1)) + y - (x * w)
     elif rotation == 2: # 180 degrees
-        i = 15 - (y * 4)- x
+        i = (w**2 - 1) - (y * w) - x
     elif rotation == 3: # 270 degrees
-        i = 3 + y + (x * 4)
+        #i = (w * (w - 1)) + y - (x * w)
+        i = (w-1) - y + (x * w)
     return i
 
 
@@ -151,49 +156,57 @@ tetromino.append("...." \
 
 # define the field
 screen = ['.']*(SCREEN_WIDTH*SCREEN_HEIGHT)
-offset = 2
+offset = 3
 
 character_set = " ABCDEFG=#"
 #character_set = [' ','A','B','C','D','E','F','G','=','#']
 
 # Game logic
 current_piece = 2
-current_rotation = 0
+current_rotation = 2
 current_x = int(FIELD_WIDTH / 2)
 current_y = 0
+
+speed = 20
+speed_counter = 0
 
 
 # Game loop
 game_over = False
 while game_over is False:
     # Game Timing ###############################
-    import time
     time.sleep(0.05)
+    speed_counter += 1
+
+
+    # force the piece down once the speed counter reaches the required number of steps.
+    force_down = speed_counter == speed
 
     # Input #####################################
-    key = stdscr.getch()
+    if terminal_on:
+        key = stdscr.getch()
 
-    input_left = curses.KEY_LEFT
-    input_down = curses.KEY_DOWN
-    input_right = curses.KEY_RIGHT
+        input_left = curses.KEY_LEFT
+        input_down = curses.KEY_DOWN
+        input_right = curses.KEY_RIGHT
 
-    if key == ord('z'):
-        current_rotation+=1
-        if current_rotation > 3:
-            current_rotation = 0
+        if key == ord('z'):
+            current_rotation+=1
+            if current_rotation > 3:
+                current_rotation = 0
 
-    if key == curses.KEY_DOWN:
-        current_y = min(current_y + 1, FIELD_HEIGHT - 4)
+        if key == curses.KEY_DOWN:
+            current_y = min(current_y + 1, FIELD_HEIGHT - 4)
 
-    if key == curses.KEY_LEFT:
-        current_x = max(current_x - 1,0)
-    if key == curses.KEY_RIGHT:
-        current_x = min(current_x + 1,FIELD_WIDTH - 4)
+        if key == curses.KEY_LEFT:
+            current_x = max(current_x - 1,0)
+        if key == curses.KEY_RIGHT:
+            current_x = min(current_x + 1,FIELD_WIDTH - 4)
 
-    if current_piece < 0:
-        current_piece = 0
-    if current_piece > 6:
-        current_piece = 6
+        if current_piece < 0:
+            current_piece = 0
+        if current_piece > 6:
+            current_piece = 6
 
 
 
@@ -202,29 +215,42 @@ while game_over is False:
     # Render Output #############################
 
     # Draw field
-    stdscr.clear() # Clear screen
+    if terminal_on:
+        stdscr.clear() # Clear screen
 
     for x in range(0, FIELD_WIDTH):
         for y in range(0, FIELD_HEIGHT):
-            screen[(y + offset) * SCREEN_WIDTH + (x + offset)] = character_set[ACTIVE_FIELD[y * FIELD_WIDTH + x]];
+            screen_index = (y + offset) * SCREEN_WIDTH + (x + offset)
+            screen[screen_index] = character_set[ACTIVE_FIELD[y * FIELD_WIDTH + x]];
 
     # Draw Current Piece
     for piece_x in range(0, 4):
         for piece_y in range(0, 4):
-            if (tetromino[current_piece][indexer_rotator(piece_x,piece_y, w=4, rotation=current_rotation)] == 'X'):
-                screen[(current_y + piece_y + offset) * SCREEN_WIDTH +
-                       (current_x + piece_x + offset)] = character_set[current_piece+1];
+            tetromino_index = indexer_rotator(piece_x,piece_y, w=4, rotation=current_rotation)
+            test_var = len(tetromino[current_piece])
+            if tetromino_index >= test_var:
+                test = 1
+            if tetromino[current_piece][tetromino_index] == 'X':
+                screen_index = (current_y + piece_y + offset) * SCREEN_WIDTH + (current_x + piece_x + offset)
+                screen[screen_index] = character_set[current_piece+1];
 
 
     # display frame
-    stdscr.addstr(0, 0, wrap("".join(screen), SCREEN_WIDTH))
+    if terminal_on:
+        stdscr.addstr(0, 0, wrap("".join(screen), SCREEN_WIDTH))
 
     # Draw instructions
-    stdscr.addstr(0, 20, "Hit 'q' to quit")
-    stdscr.addstr(1, 20, f"Current Piece: {current_piece}")
-    if key == ord('q'): # Q to exit
-        break
+        stdscr.addstr(0, 20, "Hit 'q' to quit")
+        stdscr.addstr(1, 20, f"Current Piece: {current_piece}")
+        if key == ord('q'): # Q to exit
+            break
 
-    stdscr.refresh()
+    # work out framerate
 
-curses.endwin()
+    # set console title
+        kernel32.SetConsoleTitleW(u"Console Tetris")
+
+        stdscr.refresh()
+
+if terminal_on:
+    curses.endwin()
